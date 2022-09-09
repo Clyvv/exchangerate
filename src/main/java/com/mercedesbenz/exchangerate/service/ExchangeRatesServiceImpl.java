@@ -26,13 +26,11 @@ public class ExchangeRatesServiceImpl implements ExchangeRatesService{
     private final WebClient webClient;
     Logger logger = LoggerFactory.getLogger(ExchangeRatesServiceImpl.class);
 
-    @Value("${exchangerate-api.base-code}")
-    private String defaultBaseCode;
-
-    @Value("${exchangerate-api.symbols}")
+    @Value("${application.symbols}")
     private String[] defaultSymbols;
 
-    private final String filename = "Exchangerates.xml";
+    private String filename = "Exchangerates.xml";
+    private String dailyReportFilename = "_ExchangeRateDailyReport.xml";
 
     private final XmlHelper xmlHelper;
 
@@ -40,6 +38,18 @@ public class ExchangeRatesServiceImpl implements ExchangeRatesService{
     public ExchangeRatesServiceImpl(WebClient webClient, XmlHelper xmlHelper) {
         this.webClient = webClient;
         this.xmlHelper = xmlHelper;
+    }
+
+    public void setFilename(String filename) {
+        this.filename = filename;
+    }
+
+    public void setDefaultSymbols(String[] defaultSymbols) {
+        this.defaultSymbols = defaultSymbols;
+    }
+
+    public void setDailyReportFilename(String dailyReportFilename) {
+        this.dailyReportFilename = dailyReportFilename;
     }
 
     @Scheduled(fixedRate = 2*60*60*1000)
@@ -74,7 +84,7 @@ public class ExchangeRatesServiceImpl implements ExchangeRatesService{
     public void generateExchangeRateDailyReport(ExchangeRate exchangeRate){
         logger.debug("Generating Exchange Rate Daily Report");
         String date = LocalDate.now().toString();
-        String filename = date+"_ExchangeRateDailyReport.xml";
+        String filename = date+dailyReportFilename;
         File file = new File(filename);
         ExchangeRateDailyReport report = new ExchangeRateDailyReport();
         try {
@@ -127,28 +137,28 @@ public class ExchangeRatesServiceImpl implements ExchangeRatesService{
     }
 
     @Override
-    public ExchangeRate readCurrentExchangeRate(String symbol,String baseCode) {
-        logger.debug("Fetching current exchange rate for "+symbol+"/"+baseCode);
+    public ExchangeRate readCurrentExchangeRate(String toSymbol,String fromSymbol) {
+        logger.debug("Fetching current exchange rate for "+toSymbol+"/"+fromSymbol);
         File file = new File(filename);
         ExchangeRate exchangeRate = new ExchangeRate();
         try {
             Path path = Paths.get(filename);
             if(Files.exists(path)){
                 ListExchangeRates listExchangeRates = xmlHelper.unmarshallListExchangeRates(file);
-                exchangeRate = listExchangeRates.getExchangeRates().stream().filter(rate -> rate.getBase().equals(baseCode)).findFirst().orElse(null);
+                exchangeRate = listExchangeRates.getExchangeRates().stream().filter(rate -> rate.getBase().equals(fromSymbol)).findFirst().orElse(null);
                 if(exchangeRate!=null){
-                    Map.Entry<String, Double> filtered = exchangeRate.getRates().entrySet().stream().filter(rate -> rate.getKey().equals(symbol)).findFirst().orElse(null);
+                    Map.Entry<String, Double> filtered = exchangeRate.getRates().entrySet().stream().filter(rate -> rate.getKey().equals(toSymbol)).findFirst().orElse(null);
                     if(filtered !=null){
                         exchangeRate.getRates().clear();
                         exchangeRate.getRates().put(filtered.getKey(), filtered.getValue());
                     }else{
-                        logger.debug("Symbol not found: " + symbol);
-                        throw new ExchangeRateException(symbol, "Unknown Symbol");
+                        logger.debug("Symbol not found: " + toSymbol);
+                        throw new ExchangeRateException(toSymbol, "Unknown Symbol");
                     }
 
                 }else{
-                    logger.debug("Base symbol not found: " + baseCode);
-                    throw new ExchangeRateException(baseCode, "Unknown Symbol");
+                    logger.debug("From symbol not found: " + fromSymbol);
+                    throw new ExchangeRateException(fromSymbol, "Unknown Symbol");
                 }
 
             }else{
@@ -165,7 +175,7 @@ public class ExchangeRatesServiceImpl implements ExchangeRatesService{
     @Override
     public ExchangeRateDailyReportData readDailyReport(String baseCode) {
         String date = LocalDate.now().toString();
-        String filename = date+"_ExchangeRateDailyReport.xml";
+        String filename = date+dailyReportFilename;
         File file = new File(filename);
         ExchangeRateDailyReportData reportData = null;
         try {

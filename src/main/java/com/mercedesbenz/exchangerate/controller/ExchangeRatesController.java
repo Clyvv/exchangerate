@@ -25,9 +25,9 @@ public class ExchangeRatesController {
         exchangeRatesService.fetchExchangeRates();
     }
 
-    @GetMapping("/current/{symbol}/{baseCode}")
-    private ResponseEntity<ExchangeRate> getCurrentExchangeRate(@PathVariable String symbol, @PathVariable String baseCode) {
-        ExchangeRate exchangeRate =exchangeRatesService.readCurrentExchangeRate(symbol,baseCode);
+    @GetMapping("/current/{to}/{from}")
+    private ResponseEntity<ExchangeRate> getCurrentExchangeRate(@PathVariable String to, @PathVariable String from) {
+        ExchangeRate exchangeRate =exchangeRatesService.readCurrentExchangeRate(to,from);
         HttpStatus status = exchangeRate != null ? HttpStatus.OK : HttpStatus.NOT_FOUND;
         return new ResponseEntity<ExchangeRate>(exchangeRate, status);
     }

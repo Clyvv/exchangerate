@@ -14,10 +14,10 @@ import java.time.Duration;
 @SpringBootApplication
 public class ExchangerateApplication {
 
-	@Value("${exchangerate-api.baseurl}")
+	@Value("${fixer-api.baseurl}")
 	private String externalExchangeRateApiBaseUrl;
 
-	@Value("${exchangerate-api.api-key}")
+	@Value("${fixer-api.api-key}")
 	private String externalExchangeRateApiKey;
 
 	public static void main(String[] args) {

@@ -7,7 +7,7 @@ public interface ExchangeRatesService {
 
     void fetchExchangeRates();
 
-    ExchangeRate readCurrentExchangeRate(String symbol,String baseCode);
+    ExchangeRate readCurrentExchangeRate(String to,String from);
 
     ExchangeRateDailyReportData readDailyReport(String baseCode);
 }
